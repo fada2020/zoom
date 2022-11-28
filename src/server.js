@@ -13,5 +13,8 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIo(httpServer);
  wsServer.on("connection", socket => {
     console.log(socket);
+    socket.on('enter_room', (msg)=> {
+        console.log(msg);
+    });
  });
 httpServer.listen( 3000, handlerListen );
