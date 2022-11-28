@@ -13,9 +13,17 @@ const handlerListen = () => console.log('Listening on http://localhost:3000');
 const server = http.createServer(app);
 const wss = new WebSocket.Server({server});
 //const wss = new WebSocket.Server(); web socket만 필요할 시
+
+const sockets = [];
 const handleConnerction = (socket) =>{
+    sockets.push(socket);
     socket.on("close",()=>{console.log("Disconnected from browser!!")});
-    socket.on("message",(message)=>{console.log(`new message:${message}`)});
+    socket.on("message",(message)=>{
+        sockets.forEach(aSocket => {
+            aSocket.send(message.toString());
+        });
+    
+    });
     socket.send("hello");
 
 }
