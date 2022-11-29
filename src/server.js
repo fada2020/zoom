@@ -19,6 +19,18 @@ const wsServer = SocketIo(httpServer);
         showRoom();
         socket.to(roomName).emit('welcome');
     });
+    socket.on('message', (msg, roomName, callback)=> {
+        socket.to(roomName).emit('message', msg);
+        callback();
+    });
+    socket.on("disconnecting", () => {
+        console.log(socket.rooms); // the Set contains at least the socket ID
+        socket.rooms.forEach(room=> socket.to(room).emit('bye'));
+    });
+
+    socket.on("disconnect", () => {
+        // socket.rooms.size === 0
+    });
  });
 
  const spy = (event)=>{
