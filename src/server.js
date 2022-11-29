@@ -1,6 +1,8 @@
 import express from 'express';
-import SocketIo from 'socket.io';
+import { Server } from 'socket.io';
+import { instrument } from '@socket.io/admin-ui';
 import http from 'http';
+ 
 //import WebSocket from 'ws';
 const app = express();
 app.set("view engine", "pug");
@@ -10,15 +12,43 @@ app.get("/", (_, res) => res.render("home"));
 app.get("/*", (_, res) => res.redirect("/"));
 const handlerListen = () => console.log('Listening on http://localhost:3000');
 const httpServer = http.createServer(app);
-const wsServer = SocketIo(httpServer);
-
+const wsServer = new Server(httpServer, {
+    cors: {
+      origin: "https://admin.socket.io",
+      credentials: true
+    }
+  });
+  instrument(wsServer, {
+    auth:false
+  });
+const publicRooms = () => {
+    const {
+        sockets: {
+            adapter: {
+                sids , rooms
+            },
+        },
+    } = wsServer;
+    const publicRooms = [];
+    rooms.forEach((_,key)=> {
+        if (sids.get(key) === undefined) {
+            publicRooms.push(key);
+        }
+    });
+    return publicRooms;
+}
+const countRooms = (roomName) => {
+    return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
  wsServer.on("connection", socket => {
+    console.log(wsServer.sockets.adapter);
     socket.onAny(spy);
     socket['nick'] = 'Anonymous';
     socket.on('enter_room', (roomName, showRoom)=> {
         socket.join(roomName);
         showRoom();
-        socket.to(roomName).emit('welcome', socket.nick);
+        socket.to(roomName).emit('welcome', socket.nick, countRooms(roomName));
+        wsServer.sockets.emit('room_change',publicRooms());
     });
     socket.on('nick', nick =>(socket['nick'] = nick));
     socket.on('message', (msg, roomName, callback)=> {
@@ -27,11 +57,11 @@ const wsServer = SocketIo(httpServer);
     });
     socket.on("disconnecting", () => {
         console.log(socket.rooms); // the Set contains at least the socket ID
-        socket.rooms.forEach(room=> socket.to(room).emit('bye', socket.nick));
+        socket.rooms.forEach(room=> socket.to(room).emit('bye', socket.nick, countRooms(room) -1));
     });
 
     socket.on("disconnect", () => {
-        // socket.rooms.size === 0
+        wsServer.sockets.emit('room_change',publicRooms());
     });
  });
 
