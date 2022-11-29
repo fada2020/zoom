@@ -15,14 +15,23 @@ const handleRoomSubmit = (event) => {
     event.preventDefault();
     const input = form.querySelector('input');
     roomName = input.value;
-    socket.emit('enter_room',{payload: roomName}, showRoom);
+    socket.emit('enter_room',roomName, showRoom);
     input.value = '';
 }
 const handleMessageSubmit = (event) => {
     event.preventDefault();
     const input = roomForm.querySelector('input');
-    socket.emit('message',{payload: input.value});
+    socket.emit('message',roomName);
     input.value = '';
 }
 form.addEventListener("submit", handleRoomSubmit);
 roomForm.addEventListener("submit", handleMessageSubmit);
+const getMessage = (msg) => {
+    const ul = room.querySelector('ul');
+    const li = document.createElement('li');
+    li.innerText = msg;
+    ul.appendChild(li);
+}
+socket.on('welcome',()=>{
+    getMessage('someone joined!!!');
+});
