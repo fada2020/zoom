@@ -14,18 +14,20 @@ const wsServer = SocketIo(httpServer);
 
  wsServer.on("connection", socket => {
     socket.onAny(spy);
+    socket['nick'] = 'Anonymous';
     socket.on('enter_room', (roomName, showRoom)=> {
         socket.join(roomName);
         showRoom();
-        socket.to(roomName).emit('welcome');
+        socket.to(roomName).emit('welcome', socket.nick);
     });
+    socket.on('nick', nick =>(socket['nick'] = nick));
     socket.on('message', (msg, roomName, callback)=> {
-        socket.to(roomName).emit('message', msg);
+        socket.to(roomName).emit('message', `${socket.nick}: ${msg}`);
         callback();
     });
     socket.on("disconnecting", () => {
         console.log(socket.rooms); // the Set contains at least the socket ID
-        socket.rooms.forEach(room=> socket.to(room).emit('bye'));
+        socket.rooms.forEach(room=> socket.to(room).emit('bye', socket.nick));
     });
 
     socket.on("disconnect", () => {
