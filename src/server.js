@@ -11,10 +11,16 @@ app.get("/*", (_, res) => res.redirect("/"));
 const handlerListen = () => console.log('Listening on http://localhost:3000');
 const httpServer = http.createServer(app);
 const wsServer = SocketIo(httpServer);
+
  wsServer.on("connection", socket => {
-    console.log(socket);
-    socket.on('enter_room', (msg)=> {
-        console.log(msg);
+    socket.onAny(spy);
+    socket.on('enter_room', (roomName, showRoom)=> {
+        socket.join(roomName);
+        showRoom();
     });
  });
+
+ const spy = (event)=>{
+    console.log(`socket event: ${event}`);
+ }
 httpServer.listen( 3000, handlerListen );
