@@ -60,6 +60,9 @@ const countRooms = (roomName) => {
         done();
         socket.to(roomName).emit("welcome");
     });
+    socket.on("offer", (offer, roomName)=>{
+        socket.to(roomName).emit("offer",offer);
+    });
     socket.on("disconnecting", () => {
         console.log(socket.rooms); // the Set contains at least the socket ID
         socket.rooms.forEach(room=> socket.to(room).emit('bye', socket.nick, countRooms(room) -1));
