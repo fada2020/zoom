@@ -55,6 +55,11 @@ const countRooms = (roomName) => {
         socket.to(roomName).emit('message', `${socket.nick}: ${msg}`);
         callback();
     });
+    socket.on('join_room', (roomName, done)=> {
+        socket.join(roomName);
+        done();
+        socket.to(roomName).emit("welcome");
+    });
     socket.on("disconnecting", () => {
         console.log(socket.rooms); // the Set contains at least the socket ID
         socket.rooms.forEach(room=> socket.to(room).emit('bye', socket.nick, countRooms(room) -1));
